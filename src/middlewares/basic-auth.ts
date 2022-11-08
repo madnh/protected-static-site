@@ -41,5 +41,7 @@ export default function basicAuthMiddleware(options: Options) {
     if (options.logs?.user) {
       log(`User: ${user.username}`)
     }
+
+    next()
   })
 }
