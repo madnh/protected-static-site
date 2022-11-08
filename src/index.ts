@@ -1,88 +1,76 @@
-#!/usr/bin/env node
-import http, { IncomingMessage, ServerResponse } from 'http'
 import serveHandler from 'serve-handler'
-import { log, Send, send } from './utils'
-import basicAuth from './auth-handlers/basic-auth'
+import express, { Express, Router } from 'express'
+import { Middleware } from './services/express'
+import { log } from './utils'
+
+import headerTokenMiddleware from './middlewares/header-token'
+import basicAuthMiddleware from './middlewares/basic-auth'
+import logRequestsMiddleware from './middlewares/log-requests'
+
+export { headerTokenMiddleware, basicAuthMiddleware, logRequestsMiddleware }
 
 export type ServeHandlerConfig = Parameters<typeof serveHandler>[2]
-export type IsRequireAuth = Array<string | RegExp> | ((req: IncomingMessage, url: string) => boolean)
-export type CheckAuthHandler = (req: IncomingMessage, res: ServerResponse, send: Send) => boolean
 export type Config = {
   port?: number
-  isRequireAuth?: false | IsRequireAuth
-  authHandlers?: Array<CheckAuthHandler>
+  routePrefix?: string
+  middlewares?: Array<Middleware>
   serveHandler?: ServeHandlerConfig
+  custom?: (context: { app: Express, router: Router }) => void
   logs?: {
     config?: boolean
     url?: boolean
   }
 }
 
-export { basicAuth }
-
-export function defineSiteServeConfig(config: Config): Config {
+export function defineConfig(config: Config): Config {
   return config
 }
 
-export function auth(check: CheckAuthHandler): CheckAuthHandler {
-  return check
-}
+export function makeServer(config: Config): Express {
+  const app = express()
+  const router = Router()
 
-export function checkRequireAuth(url: string, req: IncomingMessage, isRequireAuth: IsRequireAuth): boolean {
-  if (Array.isArray(isRequireAuth)) {
-    return isRequireAuth.some((check) => {
-      if (check instanceof RegExp) return check.test(url)
-      return check === url
-    })
+  if (config.logs?.url) {
+    app.use(logRequestsMiddleware())
   }
-  return isRequireAuth(req, url)
-}
+// Add middlewares
+  if (config.middlewares && config.middlewares.length) {
+    config.middlewares.forEach(middleware => app.use(middleware))
+  }
 
-export function makeServer(config: Config) {
+  // Add routers
+  if (config.routePrefix) {
+    console.log('Route prefix:', config.routePrefix)
+    app.use(config.routePrefix, router)
+  } else {
+    app.use(router)
+  }
+
+  // Fallback routes
+  app.all('*', (req, res) => {
+    res.sendStatus(404)
+  })
+
   const serveConfig: ServeHandlerConfig = {
     public: 'dist',
     etag: true,
     cleanUrls: true,
     directoryListing: false,
     trailingSlash: true,
-    ...(config.serveHandler || {}),
+    ...(config.serveHandler || {})
   }
 
   if (config.logs?.config) {
     log('Serve Config %O', serveConfig)
   }
-  const requireAuth = !!config.authHandlers && config.authHandlers?.length > 0 && config.isRequireAuth !== false
-  if (!requireAuth) {
-    console.warn('Site is public access')
-  }
 
-  return new http.Server((req, res) => {
-    const url = String(req.url || '').trim()
-    if (config.logs?.url) {
-      console.log('URL:', url)
-    }
-
-    // Check Auth Handlers
-    if (requireAuth) {
-      const isProtectRoute = config.isRequireAuth === false ? false : config.isRequireAuth === undefined || checkRequireAuth(url, req, config.isRequireAuth)
-      if (isProtectRoute) {
-        const authHandlers = config.authHandlers || []
-
-        for (const handler of authHandlers) {
-          if (!handler(req, res, send)) {
-            if (!res.headersSent) {
-              send(res, {
-                statusCode: 401,
-                data: 'Access denied',
-              })
-            }
-            return
-          }
-        }
-      }
-    }
-
-    // Serve site
+  router.use((req, res) => {
     serveHandler(req, res, serveConfig)
   })
+
+  if (config.custom) {
+    config.custom({ app, router })
+  }
+
+  return app
 }

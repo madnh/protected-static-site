@@ -1,22 +1,25 @@
 {
-  "name": "protected-static-site",
-  "description": "Serve static site with auth modes",
+  "name": "serve-di",
+  "description": "Serve the site",
   "version": "0.0.1",
   "scripts": {
-    "build": "tsc -b",
-    "build:watch": "tsc -w"
+    "build": "rm -fr dist && tsc -b",
+    "build:watch": "rm -fr dist && tsc -w"
   },
   "bin": {
-    "protected-site": "dist/cli.js"
+    "serve-it": "dist/cli.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "/dist"
+    "dist",
+    "stubs"
   ],
   "dependencies": {
     "basic-auth": "^2.0.1",
+    "cac": "^6.7.14",
     "debug": "^4.3.4",
+    "express": "^4.18.2",
     "serve-handler": "^6.1.3"
   },
   "devDependencies": {
@@ -26,22 +29,23 @@
     "typescript": "^4.7.2"
   },
   "volta": {
-    "node": "12.22.12"
+    "node": "14.21.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/madnh/protected-static-site.git"
+    "url": "git+https://github.com/madnh/serve-di.git"
   },
   "keywords": [
     "static",
     "serve",
     "protected",
-    "basic authentication"
+    "basic authentication",
+    "express"
   ],
   "author": "Danh Manh",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/madnh/protected-static-site/issues"
+    "url": "https://github.com/madnh/serve-di/issues"
   },
-  "homepage": "https://github.com/madnh/protected-static-site#readme"
+  "homepage": "https://github.com/madnh/serve-di#readme"
 }

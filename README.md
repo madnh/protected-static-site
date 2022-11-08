@@ -1,71 +1,128 @@
 # Protected Static Site
 
-- Static Site: use [serve-handler](https://github.com/vercel/serve-handler) package
-- Authentication modes:
-  - Basic Authentication
+Serve static site with useful features.
+
+- Base on [ExpressJS](http://expressjs.com/)
+- Use [serve-handler](https://github.com/vercel/serve-handler) package to serve static assets
+- Builtin middlewares:
+    - Authentication by token in header
+    - Basic Authentication
+    - Log requests
+- Written in Typescript
 
 ## Install
 
 ```sh
-npm i protected-static-site
+npm i serve-di
 ```
 
 ## Usage
+### CLI commands
 
-Use `protected-site` command to serve site.
+| Command | Description        | 
+|---------|--------------------|
+| `serve` | Serve site         |
+| `init`  | Init sample config |
+
+Use `serve-di serve` command to serve site.
 
 ```json
 {
   "scripts": {
-    "start": "protected-site"
+    "start": "serve-di serve"
   }
 }
 ```
 
-## Config (optional)
+```plain
+❯  serve-di --help
+serve-di/0.0.1
 
-Create `protected-site.js` file at ROOT of your node app.
+Usage:
+  $ serve-di
+
+Commands:
+
+  serve
+  init
+
+For more info, run any command with the `--help` flag:
+  $ serve-di --help
+  $ serve-di serve --help
+  $ serve-di init --help
+
+Options:
+  -v, --version  Display version number
+  -h, --help     Display this message
+```
+### Programing
+
+```typescript
+import { Config, makeServer } from 'serve-di'
+
+const port = process.env.PORT || 8080
+const config: Config = {
+  // ...
+}
+
+makeServer(config).listen(port, () => {
+  console.log(`Listening at: http://localhost:${port}${config.routePrefix}`)
+})
+```
+
+## Configuration (optional)
+
+Create `serve-di.config.js` file at ROOT of your node app.
 
 ```js
-const { defineSiteServeConfig, basicAuth } = require('protected-static-site')
+const { defineServeItConfig } = require('serve-di')
 
-module.exports = defineSiteServeConfig({
-  authHandlers: [
-    basicAuth({
-      users: [
-        { username: 'a', password: '123123' },
-        { username: 'b', password: '456' },
-      ],
-    }),
-  ],
-  isRequireAuth: [/^\/admin/], // Protect any /admin* routes
+module.exports = defineServeItConfig({
+  serveHandler: {
+    public: 'dist',
+    etag: true,
+    cleanUrls: true,
+    directoryListing: false,
+    trailingSlash: true
+  },
+  logs: {
+    url: true,
+    config: true
+  }
+})
+
+```
+
+### Configuration
+
+```typescript
+type Config = {
+  port?: number
+  routePrefix?: string
+  middlewares?: Array<Middleware>
+  serveHandler?: ServeHandlerConfig
+  custom?: (context: { app: Express, router: Router }) => void
+  logs?: {
+    config?: boolean
+    url?: boolean
+  }
+}
+```
+
+`ServeHandlerConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
+detail.
+
+
+### Default configs
+
+```typescript
+const config: Config = {
   serveHandler: {
     public: 'dist',
     etag: true,
     cleanUrls: true,
     directoryListing: false,
     trailingSlash: true,
-  },
-  logs: {
-    url: true,
-    config: true,
-  },
-})
-```
-
-### Configuration
-
-```ts
-{
-    port?: number;
-    isRequireAuth?: false | Array<string | RegExp> | ((req: IncomingMessage, url: string) => boolean)
-    authHandlers?: Array<(req: IncomingMessage, res: ServerResponse, send: Send) => boolean>
-    serveHandler?: ServeHandlerConfig;
-    logs?: {
-        config?: boolean;
-        url?: boolean;
-    };
+  }
 }
 ```
-
-`ServeHandlerConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for detail.
