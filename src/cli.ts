@@ -7,7 +7,7 @@ import { Server } from 'http'
 import * as fs from 'fs'
 
 const pkg = require('../package.json')
-const defaultConfigFile = 'serve-now.config.js'
+const defaultConfigFile = 'serve-di.config.js'
 
 const cli = cac(pkg.name)
 cli.version(pkg.version)
