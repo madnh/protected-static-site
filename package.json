@@ -7,7 +7,7 @@
     "build:watch": "rm -fr dist && tsc -w"
   },
   "bin": {
-    "serve-it": "dist/cli.js"
+    "serve-di": "dist/cli.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
