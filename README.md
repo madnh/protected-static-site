@@ -1,14 +1,15 @@
-# Protected Static Site
+# serve-di
 
 Serve static site with useful features.
 
 - Base on [ExpressJS](http://expressjs.com/)
+- Written in Typescript
 - Use [serve-handler](https://github.com/vercel/serve-handler) package to serve static assets
 - Builtin middlewares:
     - Authentication by token in header
     - Basic Authentication
     - Log requests
-- Written in Typescript
+- Use custom config file
 
 ## Install
 
@@ -75,9 +76,9 @@ makeServer(config).listen(port, () => {
 Create `serve-di.config.js` file at ROOT of your node app.
 
 ```js
-const { defineServeItConfig } = require('serve-di')
+const { defineConfig } = require('serve-di')
 
-module.exports = defineServeItConfig({
+module.exports = defineConfig({
   serveHandler: {
     public: 'dist',
     etag: true,
