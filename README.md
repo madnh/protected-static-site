@@ -9,6 +9,7 @@ Serve static site with useful features.
     - Authentication by token in header
     - Basic Authentication
     - Log requests
+    - Proxy paths
 - Use custom config file
 
 ## Install
@@ -97,10 +98,12 @@ module.exports = defineConfig({
 ### Configuration
 
 ```typescript
+import type { Filter, Options } from 'http-proxy-middleware'
 type Config = {
   port?: number
   routePrefix?: string
   middlewares?: Array<Middleware>
+  proxies?: Record<`/${string}`, string | Filter | Options>
   serveHandler?: ServeHandlerConfig
   custom?: (context: { app: Express, router: Router }) => void
   logs?: {
@@ -114,7 +117,7 @@ type Config = {
 detail.
 
 
-### Default configs
+#### Default configs
 
 ```typescript
 const config: Config = {
@@ -127,3 +130,28 @@ const config: Config = {
   }
 }
 ```
+
+## Proxy
+Use [http-proxy-middleware](https://github.com/chimurai/http-proxy-middleware) to add proxy middleware.
+
+Remember to install `http-proxy-middleware`.
+
+```sh
+npm i http-proxy-middleware
+```
+
+Config:
+
+```typescript
+const config: Config = {
+  proxies: {
+    '/api': {
+      target: 'https://api.site.com',
+      changeOrigin: true
+    },
+    '/api2': 'http://localhost:3000/'
+  },
+}
+```
+
+Prefer to its document for more detail.

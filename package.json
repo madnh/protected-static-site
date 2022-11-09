@@ -47,5 +47,8 @@
   "bugs": {
     "url": "https://github.com/madnh/serve-di/issues"
   },
-  "homepage": "https://github.com/madnh/serve-di#readme"
+  "homepage": "https://github.com/madnh/serve-di#readme",
+  "optionalDependencies": {
+    "http-proxy-middleware": "^2.0.6"
+  }
 }
