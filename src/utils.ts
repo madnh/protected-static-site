@@ -1,6 +1,6 @@
 import debug from "debug";
 
-export const log = debug('site-serve')
+export const log = debug('serve-di')
 
 export function tryImport<T>(file: string): { exists: false, content: undefined } | { exists: true, content: T } {
   try {

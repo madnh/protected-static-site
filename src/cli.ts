@@ -20,7 +20,12 @@ cli.command('serve', 'Serve site', { allowUnknownOptions: false })
   .option('--config <file>', 'Config file')
   .option('--port <port>', 'Listening port')
   .option('--route-prefix <routePrefix>', 'Route prefix')
+  .option('--verbose', 'Print verbose logging')
   .action((options) => {
+    if (options.verbose === true) {
+      log.enabled = true
+    }
+
     serveCommand({
       configFile: options.file,
       port: options.port,
