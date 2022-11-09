@@ -1,6 +1,6 @@
 import serveHandler from 'serve-handler'
-import express, { Express, Router } from 'express'
-import { Middleware } from './services/express'
+import express, { Express } from 'express'
+import { Middleware, middleware, passThroughMW } from './services/express'
 import { log } from './utils'
 
 import headerTokenMiddleware from './middlewares/header-token'
@@ -8,6 +8,7 @@ import basicAuthMiddleware from './middlewares/basic-auth'
 import logRequestsMiddleware from './middlewares/log-requests'
 
 export { headerTokenMiddleware, basicAuthMiddleware, logRequestsMiddleware }
+export { middleware, passThroughMW }
 
 export type ServeHandlerConfig = Parameters<typeof serveHandler>[2]
 export type Config = {
@@ -15,7 +16,7 @@ export type Config = {
   routePrefix?: string
   middlewares?: Array<Middleware>
   serveHandler?: ServeHandlerConfig
-  custom?: (context: { app: Express, router: Router }) => void
+  custom?: (app: Express, config: Config) => void
   logs?: {
     config?: boolean
     url?: boolean
@@ -28,28 +29,16 @@ export function defineConfig(config: Config): Config {
 
 export function makeServer(config: Config): Express {
   const app = express()
-  const router = Router()
+
+  // Add middlewares
+  if (config.middlewares && config.middlewares.length) {
+    log('Apply middlewares')
+    config.middlewares.forEach(middleware => app.use(middleware))
+  }
 
   if (config.logs?.url) {
     app.use(logRequestsMiddleware())
   }
-// Add middlewares
-  if (config.middlewares && config.middlewares.length) {
-    config.middlewares.forEach(middleware => app.use(middleware))
-  }
-
-  // Add routers
-  if (config.routePrefix) {
-    console.log('Route prefix:', config.routePrefix)
-    app.use(config.routePrefix, router)
-  } else {
-    app.use(router)
-  }
-
-  // Fallback routes
-  app.all('*', (req, res) => {
-    res.sendStatus(404)
-  })
 
   const serveConfig: ServeHandlerConfig = {
     public: 'dist',
@@ -64,13 +53,25 @@ export function makeServer(config: Config): Express {
     log('Serve Config %O', serveConfig)
   }
 
-  router.use((req, res) => {
+  const serveMw: Middleware = (req, res) => {
     serveHandler(req, res, serveConfig)
-  })
+  }
+
+  if (config.routePrefix) {
+    console.log('Route prefix:', config.routePrefix)
+    app.use(config.routePrefix, serveMw)
+  } else {
+    app.use(serveMw)
+  }
 
   if (config.custom) {
-    config.custom({ app, router })
+    config.custom(app, config)
   }
+
+  // Fallback routes
+  app.all('*', (req, res) => {
+    res.sendStatus(404)
+  })
 
   return app
 }

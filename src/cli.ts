@@ -41,7 +41,7 @@ cli.parse()
 function serveCommand(options?: { configFile: string, port?: number | string, routePrefix?: string }) {
   const configFileName = options?.configFile
   const configFilePath = path.resolve(process.cwd(), configFileName || defaultConfigFile)
-  const { exists, content: customConfig } = tryImport<Config>(configFilePath)
+  const { exists, error, content: customConfig } = tryImport<Config>(configFilePath)
 
   if (!exists) {
     const message = `Config file not found: ${configFileName || defaultConfigFile}`
@@ -52,6 +52,10 @@ function serveCommand(options?: { configFile: string, port?: number | string, ro
     }
 
     console.log(message)
+  }
+  if (error) {
+    console.error('Parse config file failed')
+    throw error
   }
 
   log('Config file: %s', path.relative(process.cwd(), configFilePath))
