@@ -16,6 +16,7 @@
     "stubs"
   ],
   "dependencies": {
+    "@types/express": "^4.17.14",
     "basic-auth": "^2.0.1",
     "cac": "^6.7.14",
     "debug": "^4.3.4",

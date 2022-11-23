@@ -6,11 +6,12 @@ Serve static site with useful features.
 - Written in Typescript
 - Use [serve-handler](https://github.com/vercel/serve-handler) package to serve static assets
 - Builtin middlewares:
-    - Authentication by token in header
-    - Basic Authentication
-    - Log requests
-    - Proxy paths
+  - Authentication by token in header
+  - Basic Authentication
+  - Log requests
+  - Proxy paths
 - Use custom config file
+- Generate commands
 
 ## Install
 
@@ -19,12 +20,14 @@ npm i serve-di
 ```
 
 ## Usage
+
 ### CLI commands
 
-| Command | Description        | 
-|---------|--------------------|
-| `serve` | Serve site         |
-| `init`  | Init sample config |
+| Command        | Description                                                     |
+| -------------- | --------------------------------------------------------------- |
+| `serve`        | Serve site                                                      |
+| `init-config`  | Init sample config                                              |
+| `init-package` | Init `package.json` file, which only contain `serve-di` package |
 
 Use `serve-di serve` command to serve site.
 
@@ -38,25 +41,28 @@ Use `serve-di serve` command to serve site.
 
 ```plain
 ❯  serve-di --help
-serve-di/0.0.1
+serve-di/0.0.7
 
 Usage:
   $ serve-di
 
 Commands:
 
-  serve
-  init
+  serve               Serve site
+  init-config [file]  Init config file
+  init-package [div]  Init package.json file, which only contain `serve-di` package
 
 For more info, run any command with the `--help` flag:
   $ serve-di --help
   $ serve-di serve --help
-  $ serve-di init --help
+  $ serve-di init-config --help
+  $ serve-di init-package --help
 
 Options:
   -v, --version  Display version number
   -h, --help     Display this message
 ```
+
 ### Programing
 
 ```typescript
@@ -85,14 +91,13 @@ module.exports = defineConfig({
     etag: true,
     cleanUrls: true,
     directoryListing: false,
-    trailingSlash: true
+    trailingSlash: true,
   },
   logs: {
     url: true,
-    config: true
-  }
+    config: true,
+  },
 })
-
 ```
 
 ### Configuration
@@ -105,7 +110,7 @@ type Config = {
   middlewares?: Array<Middleware>
   proxies?: Record<`/${string}`, string | Filter | Options>
   serveHandler?: ServeHandlerConfig
-  custom?: (context: { app: Express, router: Router }) => void
+  custom?: (context: { app: Express; router: Router }) => void
   logs?: {
     config?: boolean
     url?: boolean
@@ -115,7 +120,6 @@ type Config = {
 
 `ServeHandlerConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
 detail.
-
 
 #### Default configs
 
@@ -127,11 +131,12 @@ const config: Config = {
     cleanUrls: true,
     directoryListing: false,
     trailingSlash: true,
-  }
+  },
 }
 ```
 
 ## Proxy
+
 Use [http-proxy-middleware](https://github.com/chimurai/http-proxy-middleware) to add proxy middleware.
 
 Remember to install `http-proxy-middleware`.
@@ -147,9 +152,9 @@ const config: Config = {
   proxies: {
     '/api': {
       target: 'https://api.site.com',
-      changeOrigin: true
+      changeOrigin: true,
     },
-    '/api2': 'http://localhost:3000/'
+    '/api2': 'http://localhost:3000/',
   },
 }
 ```

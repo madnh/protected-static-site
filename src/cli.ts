@@ -16,7 +16,8 @@ cli.help()
 // Default command
 cli.command('').action(() => cli.outputHelp())
 
-cli.command('serve', 'Serve site', { allowUnknownOptions: false })
+cli
+  .command('serve', 'Serve site', { allowUnknownOptions: false })
   .option('--config <file>', 'Config file')
   .option('--port <port>', 'Listening port')
   .option('--route-prefix <routePrefix>', 'Route prefix')
@@ -29,16 +30,20 @@ cli.command('serve', 'Serve site', { allowUnknownOptions: false })
     serveCommand({
       configFile: options.file,
       port: options.port,
-      routePrefix: options.routePrefix
+      routePrefix: options.routePrefix,
     })
   })
-cli.command('init', 'Init config file', { allowUnknownOptions: false })
-  .option('--config <file>', 'Config file')
-  .action((options) => initCommand({ configFile: options.file }))
+
+cli.command('init-config [file]', 'Init config file', { allowUnknownOptions: false }).action((file) => initConfigCommand({ configFile: file }))
+
+cli
+  .command('init-package [div]', 'Init package.json file')
+  .option('name <name>', 'Name of package', { default: 'app' })
+  .action((dir, options) => initPackageCommand(dir, options))
 
 cli.parse()
 
-function serveCommand(options?: { configFile: string, port?: number | string, routePrefix?: string }) {
+function serveCommand(options?: { configFile: string; port?: number | string; routePrefix?: string }) {
   const configFileName = options?.configFile
   const configFilePath = path.resolve(process.cwd(), configFileName || defaultConfigFile)
   const { exists, error, content: customConfig } = tryImport<Config>(configFilePath)
@@ -64,30 +69,30 @@ function serveCommand(options?: { configFile: string, port?: number | string, ro
   const config: Config = {
     ...customConfig,
     serveHandler: {
-      ...(customConfig?.serveHandler || {})
+      ...(customConfig?.serveHandler || {}),
     },
-    routePrefix: options?.routePrefix || customConfig?.routePrefix || ''
+    routePrefix: options?.routePrefix || customConfig?.routePrefix || '',
   }
   const routePrefix = `/${config.routePrefix || ''}`.replace(/\/{2,}/, '/')
   const customPort = options?.port ? parseInt(String(options.port)) : undefined
-  const listeningPort = (customPort && !Number.isNaN(customPort)) ? customPort : (config.port || process.env.PORT || 8080)
+  const listeningPort = customPort && !Number.isNaN(customPort) ? customPort : config.port || process.env.PORT || 8080
 
   server = makeServer(config).listen(listeningPort, () => {
     console.log(`Listening at: http://localhost:${listeningPort}${routePrefix}`)
   })
 
-// Do graceful shutdown
-  process.on('SIGINT', function() {
+  // Do graceful shutdown
+  process.on('SIGINT', function () {
     console.log('graceful shutdown app')
     if (server) {
-      server.close(function() {
+      server.close(function () {
         console.log('app closed')
       })
     }
   })
 }
 
-function initCommand(options?: { configFile?: string }) {
+function initConfigCommand(options?: { configFile?: string }) {
   const configFileName = options?.configFile || defaultConfigFile
   const configFilePath = path.resolve(process.cwd(), configFileName)
   const stubFile = path.resolve(__dirname, '../stubs/sample.js')
@@ -96,5 +101,23 @@ function initCommand(options?: { configFile?: string }) {
   console.log(`Config file: ${configFileName}`)
 
   fs.writeFileSync(configFilePath, configTemplate)
+  console.log('Done')
+}
+
+function initPackageCommand(dir = '.', {name} = {name: 'app'}) {
+  const outputFile = path.resolve(process.cwd(), dir, 'package.json')
+  const template = JSON.stringify({
+    name,
+    private: true,
+    scripts: {
+      start: "serve-di serve"
+    },
+    dependencies: {
+      "serve-di": `^${pkg.version}`
+    }
+  }, null, 2)
+
+  console.log('Write file:', outputFile)
+  fs.writeFileSync(outputFile, template)
   console.log('Done')
 }
