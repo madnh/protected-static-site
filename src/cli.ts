@@ -3,7 +3,6 @@ import cac from 'cac'
 import path from 'path'
 import { Config, makeServer } from './index'
 import { log, tryImport } from './utils'
-import { Server } from 'http'
 import * as fs from 'fs'
 
 const pkg = require('../package.json')
@@ -65,7 +64,6 @@ function serveCommand(options?: { configFile: string; port?: number | string; ro
 
   log('Config file: %s', path.relative(process.cwd(), configFilePath))
 
-  let server: Server
   const config: Config = {
     ...customConfig,
     serveHandler: {
@@ -77,7 +75,7 @@ function serveCommand(options?: { configFile: string; port?: number | string; ro
   const customPort = options?.port ? parseInt(String(options.port)) : undefined
   const listeningPort = customPort && !Number.isNaN(customPort) ? customPort : config.port || process.env.PORT || 8080
 
-  server = makeServer(config).listen(listeningPort, () => {
+  const server = makeServer(config).listen(listeningPort, () => {
     console.log(`Listening at: http://localhost:${listeningPort}${routePrefix}`)
   })
 

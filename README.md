@@ -8,6 +8,7 @@ Serve static site with useful features.
 - Builtin middlewares:
   - Authentication by token in header
   - Basic Authentication
+  - Filter access by IP, netmask
   - Log requests
   - Proxy paths
 - Use custom config file

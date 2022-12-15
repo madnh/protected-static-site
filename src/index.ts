@@ -7,9 +7,10 @@ import type { Filter, Options } from 'http-proxy-middleware'
 import headerTokenMiddleware from './middlewares/header-token'
 import basicAuthMiddleware from './middlewares/basic-auth'
 import logRequestsMiddleware from './middlewares/log-requests'
+import filterIpMiddleware from './middlewares/filter-ip'
 
 
-export { headerTokenMiddleware, basicAuthMiddleware, logRequestsMiddleware }
+export { headerTokenMiddleware, basicAuthMiddleware, logRequestsMiddleware, filterIpMiddleware }
 export { middleware, passThroughMW }
 
 export type ServeHandlerConfig = Parameters<typeof serveHandler>[2]
