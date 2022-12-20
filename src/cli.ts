@@ -51,7 +51,7 @@ cli
 cli.command('init-config [file]', 'Init config file', { allowUnknownOptions: false }).action((file) => initConfigCommand({ configFile: file }))
 
 cli
-  .command('init-package [div]', 'Init package.json file')
+  .command('init-package [div]', 'Init package.json file, which only contain `serve-di` package')
   .option('name <name>', 'Name of package', { default: 'app' })
   .action((dir, options) => initPackageCommand(dir, options))
 

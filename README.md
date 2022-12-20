@@ -40,16 +40,17 @@ Use `serve-di serve` command to serve site.
 }
 ```
 
+#### Main CLI
+
 ```plain
-❯  serve-di --help
-serve-di/0.0.7
+serve-di/0.0.10
 
 Usage:
-  $ serve-di
+  $ serve-di 
 
 Commands:
-
-  serve               Serve site
+                      
+  serve [publicDir]   Serve site
   init-config [file]  Init config file
   init-package [div]  Init package.json file, which only contain `serve-di` package
 
@@ -60,8 +61,25 @@ For more info, run any command with the `--help` flag:
   $ serve-di init-package --help
 
 Options:
-  -v, --version  Display version number
-  -h, --help     Display this message
+  -v, --version  Display version number 
+  -h, --help     Display this message 
+```
+
+
+#### `serve`
+
+```plain
+serve-di/0.0.10
+
+Usage:
+  $ serve-di serve [publicDir]
+
+Options:
+  --config <file>               Config file 
+  --port <port>                 Listening port 
+  --route-prefix <routePrefix>  Route prefix 
+  --verbose                     Print verbose logging 
+  -h, --help                    Display this message 
 ```
 
 ### Programing
