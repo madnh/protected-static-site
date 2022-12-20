@@ -4,6 +4,7 @@ import path from 'path'
 import { Config, makeServer } from './index'
 import { log, tryImport } from './utils'
 import * as fs from 'fs'
+import os from 'os'
 
 const pkg = require('../package.json')
 const defaultConfigFile = 'serve-di.config.js'
@@ -40,8 +41,7 @@ cli
       log.enabled = true
     }
 
-    serveCommand({
-      defaultServeDir,
+    serveCommand(defaultServeDir, {
       configFile: options.file,
       port: options.port,
       routePrefix: options.routePrefix,
@@ -57,7 +57,25 @@ cli
 
 cli.parse()
 
-function serveCommand(options?: { defaultServeDir?: string; configFile: string; port?: number | string; routePrefix?: string }) {
+function linkRoutePrefix(targetPath: string, prefix: string): [string, () => void] {
+  const tmpDir = os.tmpdir()
+  const targetTempDir = fs.mkdtempSync(`${tmpDir}${path.sep}serve-dir-prefix-`)
+  const targetTmpDir = `${targetTempDir}/${prefix}`.replace(/[/\\]{2,}/, path.sep).replace(/[/\\]*$/, '')
+  fs.symlinkSync(targetPath, targetTmpDir)
+
+  const disposeCb = () => {
+    // console.log('Remove temp linked path:', targetTempDir);
+    try{
+      fs.rmdirSync(targetTempDir, {recursive: true})
+    }catch(e){
+      console.error('Error! Remove temp linked path failed: %s, %s', targetTempDir, e || 'unknown reason');
+    }
+  }
+
+  return [targetTempDir, disposeCb]
+}
+
+function serveCommand(defaultServeDir: string, options?: { configFile: string; port?: number | string; routePrefix?: string }) {
   const configFileName = options?.configFile
   const configFilePath = path.resolve(process.cwd(), configFileName || defaultConfigFile)
   const { exists, error, content: customConfig } = tryImport<Config>(configFilePath)
@@ -77,17 +95,25 @@ function serveCommand(options?: { defaultServeDir?: string; configFile: string; 
     throw error
   }
 
+  const onShutdownCallbacks: Array<() => void> = []
+
   log('Config file: %s', path.relative(process.cwd(), configFilePath))
+
+  if (options?.routePrefix) {
+    const [linkedDir, disposeCb] = linkRoutePrefix(defaultServeDir, options.routePrefix)
+    defaultServeDir = linkedDir
+    onShutdownCallbacks.push(disposeCb)
+    // console.log('Use link dir', defaultServeDir)
+  }
 
   const config: Config = {
     ...customConfig,
     serveHandler: {
-      ...(options?.defaultServeDir ? { public: options.defaultServeDir } : {}),
+      ...{ public: defaultServeDir },
       ...(customConfig?.serveHandler || {}),
     },
-    routePrefix: options?.routePrefix || customConfig?.routePrefix || '',
   }
-  const routePrefix = `/${config.routePrefix || ''}`.replace(/\/{2,}/, '/')
+  const routePrefix = `/${options?.routePrefix || ''}`.replace(/\/{2,}/, '/')
   const customPort = options?.port ? parseInt(String(options.port)) : undefined
   const listeningPort = customPort && !Number.isNaN(customPort) ? customPort : config.port || process.env.PORT || 8080
 
@@ -99,6 +125,9 @@ function serveCommand(options?: { defaultServeDir?: string; configFile: string; 
   process.on('SIGINT', function () {
     console.log('graceful shutdown app')
     if (server) {
+      for (const cb of onShutdownCallbacks) {
+        cb()
+      }
       server.close(function () {
         console.log('app closed')
       })

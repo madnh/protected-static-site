@@ -125,7 +125,6 @@ module.exports = defineConfig({
 import type { Filter, Options } from 'http-proxy-middleware'
 type Config = {
   port?: number
-  routePrefix?: string
   middlewares?: Array<Middleware>
   proxies?: Record<`/${string}`, string | Filter | Options>
   serveHandler?: ServeHandlerConfig

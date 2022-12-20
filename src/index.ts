@@ -20,7 +20,6 @@ export type Rewrite = {
 export type ServeHandlerConfig = Parameters<typeof serveHandler>[2]
 export type Config = {
   port?: number
-  routePrefix?: string
   middlewares?: Array<Middleware>
   proxies?: Record<`/${string}`, string | Filter | Options>
   serveHandler?: ServeHandlerConfig
@@ -83,16 +82,9 @@ export function makeServer(config: Config): Express {
     log('Serve Config %O', serveConfig)
   }
 
-  const serveMw: Middleware = (req, res) => {
+  app.use((req, res) => {
     serveHandler(req, res, serveConfig)
-  }
-
-  if (config.routePrefix) {
-    log('Route prefix:', config.routePrefix)
-    app.use(config.routePrefix, serveMw)
-  } else {
-    app.use(serveMw)
-  }
+  })
 
   // Fallback routes
   app.all('*', (req, res) => {
