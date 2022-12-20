@@ -7,6 +7,7 @@ import * as fs from 'fs'
 
 const pkg = require('../package.json')
 const defaultConfigFile = 'serve-di.config.js'
+const cwd = process.cwd()
 
 const cli = cac(pkg.name)
 cli.version(pkg.version)
@@ -16,17 +17,31 @@ cli.help()
 cli.command('').action(() => cli.outputHelp())
 
 cli
-  .command('serve', 'Serve site', { allowUnknownOptions: false })
+  .command('serve [publicDir]', 'Serve site', { allowUnknownOptions: false })
   .option('--config <file>', 'Config file')
   .option('--port <port>', 'Listening port')
   .option('--route-prefix <routePrefix>', 'Route prefix')
   .option('--verbose', 'Print verbose logging')
-  .action((options) => {
+  .action((publicDir, options) => {
+    let defaultServeDir = cwd
+
+    if (publicDir) {
+      console.log('Serve director:', path.relative(cwd, publicDir) || path.relative(publicDir, cwd) || './')
+      const fullPath = path.resolve(cwd, publicDir)
+      if (!fs.existsSync(fullPath)) {
+        console.error(`publicDir not found: ${fullPath}`)
+        process.exit(1)
+      }
+
+      defaultServeDir = fullPath
+    }
+
     if (options.verbose === true) {
       log.enabled = true
     }
 
     serveCommand({
+      defaultServeDir,
       configFile: options.file,
       port: options.port,
       routePrefix: options.routePrefix,
@@ -42,7 +57,7 @@ cli
 
 cli.parse()
 
-function serveCommand(options?: { configFile: string; port?: number | string; routePrefix?: string }) {
+function serveCommand(options?: { defaultServeDir?: string; configFile: string; port?: number | string; routePrefix?: string }) {
   const configFileName = options?.configFile
   const configFilePath = path.resolve(process.cwd(), configFileName || defaultConfigFile)
   const { exists, error, content: customConfig } = tryImport<Config>(configFilePath)
@@ -67,6 +82,7 @@ function serveCommand(options?: { configFile: string; port?: number | string; ro
   const config: Config = {
     ...customConfig,
     serveHandler: {
+      ...(options?.defaultServeDir ? { public: options.defaultServeDir } : {}),
       ...(customConfig?.serveHandler || {}),
     },
     routePrefix: options?.routePrefix || customConfig?.routePrefix || '',
@@ -102,18 +118,22 @@ function initConfigCommand(options?: { configFile?: string }) {
   console.log('Done')
 }
 
-function initPackageCommand(dir = '.', {name} = {name: 'app'}) {
+function initPackageCommand(dir = '.', { name } = { name: 'app' }) {
   const outputFile = path.resolve(process.cwd(), dir, 'package.json')
-  const template = JSON.stringify({
-    name,
-    private: true,
-    scripts: {
-      start: "serve-di serve"
+  const template = JSON.stringify(
+    {
+      name,
+      private: true,
+      scripts: {
+        start: 'serve-di serve',
+      },
+      dependencies: {
+        'serve-di': `^${pkg.version}`,
+      },
     },
-    dependencies: {
-      "serve-di": `^${pkg.version}`
-    }
-  }, null, 2)
+    null,
+    2
+  )
 
   console.log('Write file:', outputFile)
   fs.writeFileSync(outputFile, template)

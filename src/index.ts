@@ -13,6 +13,10 @@ import filterIpMiddleware from './middlewares/filter-ip'
 export { headerTokenMiddleware, basicAuthMiddleware, logRequestsMiddleware, filterIpMiddleware }
 export { middleware, passThroughMW }
 
+export type Rewrite = {
+  source: string;
+  destination: string;
+}
 export type ServeHandlerConfig = Parameters<typeof serveHandler>[2]
 export type Config = {
   port?: number
