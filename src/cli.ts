@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import cac from 'cac'
 import path from 'path'
-import { Config, makeServer } from './index'
+import { basicAuthMiddleware, Config, filterIpMiddleware, makeServer } from './index'
 import { log, tryImport } from './utils'
 import * as fs from 'fs'
 import os from 'os'
+import { ConfigSchema } from './config'
 
 const pkg = require('../package.json')
 const defaultConfigFile = 'serve-di.config.js'
@@ -23,6 +24,7 @@ cli
   .option('--port <port>', 'Listening port')
   .option('--route-prefix <routePrefix>', 'Route prefix')
   .option('--verbose', 'Print verbose logging')
+  .option('--noAuth', 'Disable basic auth if exists in config file')
   .action((publicDir, options) => {
     let defaultServeDir = cwd
 
@@ -42,7 +44,8 @@ cli
     }
 
     serveCommand(defaultServeDir, {
-      configFile: options.file,
+      noAuth: options.noAuth,
+      configFile: options.config,
       port: options.port,
       routePrefix: options.routePrefix,
     })
@@ -65,19 +68,20 @@ function linkRoutePrefix(targetPath: string, prefix: string): [string, () => voi
 
   const disposeCb = () => {
     // console.log('Remove temp linked path:', targetTempDir);
-    try{
-      fs.rmdirSync(targetTempDir, {recursive: true})
-    }catch(e){
-      console.error('Error! Remove temp linked path failed: %s, %s', targetTempDir, e || 'unknown reason');
+    try {
+      fs.rmdirSync(targetTempDir, { recursive: true })
+    } catch (e) {
+      console.error('Error! Remove temp linked path failed: %s, %s', targetTempDir, e || 'unknown reason')
     }
   }
 
   return [targetTempDir, disposeCb]
 }
 
-function serveCommand(defaultServeDir: string, options?: { configFile: string; port?: number | string; routePrefix?: string }) {
+function serveCommand(defaultServeDir: string, options?: { noAuth?: boolean, configFile: string; port?: number | string; routePrefix?: string }) {
   const configFileName = options?.configFile
   const configFilePath = path.resolve(process.cwd(), configFileName || defaultConfigFile)
+
   const { exists, error, content: customConfig } = tryImport<Config>(configFilePath)
 
   if (!exists) {
@@ -94,6 +98,36 @@ function serveCommand(defaultServeDir: string, options?: { configFile: string; p
     console.error('Parse config file failed')
     throw error
   }
+  let useConfig: Config = customConfig || {}
+
+  if (configFilePath.endsWith('.json')) {
+    const checkConfig = ConfigSchema.safeParse(customConfig)
+    if (!checkConfig.success) {
+      console.error('Config file is invalid:', checkConfig.error.issues)
+      process.exit(1)
+    }
+
+    const data = checkConfig.data
+    const convertedConfig: Config = {
+      middlewares: []
+    }
+
+    if (data.validIps) {
+      convertedConfig.middlewares?.push(filterIpMiddleware({ allowIps: data.validIps }))
+    }
+    if (data.auth && !options?.noAuth) {
+      convertedConfig.middlewares?.push(
+        basicAuthMiddleware({
+          users: data.auth,
+        })
+      )
+    }
+    if(data.serve){
+      convertedConfig.serveHandler = data.serve as Config['serveHandler']
+    }
+
+    useConfig = convertedConfig
+  }
 
   const onShutdownCallbacks: Array<() => void> = []
 
@@ -107,10 +141,10 @@ function serveCommand(defaultServeDir: string, options?: { configFile: string; p
   }
 
   const config: Config = {
-    ...customConfig,
+    ...useConfig,
     serveHandler: {
       ...{ public: defaultServeDir },
-      ...(customConfig?.serveHandler || {}),
+      ...(useConfig?.serveHandler || {}),
     },
   }
   const routePrefix = `/${options?.routePrefix || ''}`.replace(/\/{2,}/, '/')
@@ -138,12 +172,22 @@ function serveCommand(defaultServeDir: string, options?: { configFile: string; p
 function initConfigCommand(options?: { configFile?: string }) {
   const configFileName = options?.configFile || defaultConfigFile
   const configFilePath = path.resolve(process.cwd(), configFileName)
+  
   const stubFile = path.resolve(__dirname, '../stubs/sample.js')
   const configTemplate = fs.readFileSync(stubFile).toString()
 
-  console.log(`Config file: ${configFileName}`)
+  console.log(`Config file (as JS module): ${configFileName}`)
 
   fs.writeFileSync(configFilePath, configTemplate)
+
+  const stubFileJson = path.resolve(__dirname, '../stubs/sample.json')
+  const configTemplateJson = fs.readFileSync(stubFileJson).toString()
+
+  console.log(`Config file (as JS file): ${configFileName}`)
+
+  fs.writeFileSync(configFilePath, configTemplateJson)
+
+  
   console.log('Done')
 }
 
