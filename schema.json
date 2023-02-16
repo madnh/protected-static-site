@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/ServeConfig",
+  "definitions": {
+    "ServeConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "auth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AuthInfo"
+          }
+        },
+        "validIps": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "serve": {
+          "$ref": "#/definitions/Serve"
+        }
+      },
+      "title": "ServeConfig"
+    },
+
+    "Serve": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "public": {
+          "type": "string"
+        },
+        "etag": {
+          "type": "boolean"
+        },
+        "cleanUrls": {
+          "type": "boolean"
+        },
+        "directoryListing": {
+          "type": "boolean"
+        },
+        "trailingSlash": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ServeHeader"
+          }
+        },
+        "rewrites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Rewrite"
+          }
+        },
+        "redirects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Redirect"
+          }
+        }
+      },
+      "required": ["cleanUrls", "directoryListing", "etag", "headers", "public", "redirects", "rewrites", "trailingSlash"],
+      "title": "Serve"
+    },
+    "AuthInfo": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": ["username", "password"]
+    },
+    "ServeHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HeaderHeader"
+          }
+        }
+      },
+      "required": ["headers", "source"],
+      "title": "ServeHeader"
+    },
+    "HeaderHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": ["key", "value"],
+      "title": "HeaderHeader"
+    },
+    "Redirect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "type": {
+          "type": "integer"
+        }
+      },
+      "required": ["destination", "source", "type"],
+      "title": "Redirect"
+    },
+    "Rewrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        }
+      },
+      "required": ["destination", "source"],
+      "title": "Rewrite"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "./schema.json",
+  "auth": [
+    {"username": "A", "password": "B"},
+    {"username": "C", "password": "D"}
+  ],
+  "serve": {
+    "public": "dist",
+    "etag": true,
+    "cleanUrls": true,
+    "directoryListing": false,
+    "trailingSlash": true,
+    "headers": [
+      {
+        "source": "**.(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/docs",
+        "destination": "/docs/getting-started",
+        "type": 301
+      }
+    ]
+  }
+}
