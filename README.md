@@ -11,26 +11,46 @@ Serve static site with useful features.
   - Filter access by IP, netmask
   - Log requests
   - Proxy paths
-- Use custom config file
-- Generate commands
+- Use custom config file: in JS or JSON formats
+- Generate init command
 
 ## Install
 
+### Global
+
+```sh
+npm i -g serve-di
+```
+
+### In project
+
 ```sh
 npm i serve-di
+```
+
+### NPX style
+
+```sh
+npx serve-di
 ```
 
 ## Usage
 
 ### CLI commands
 
-| Command        | Description                                                     |
-| -------------- | --------------------------------------------------------------- |
-| `serve`        | Serve site                                                      |
-| `init-config`  | Init sample config                                              |
-| `init-package` | Init `package.json` file, which only contain `serve-di` package |
+| Command       | Description        |
+| ------------- | ------------------ |
+| `serve`       | Serve site         |
+| `init-config` | Init sample config |
 
 Use `serve-di serve` command to serve site.
+
+```sh
+serve-di serve
+npx serve-di serve
+```
+
+As NPM script
 
 ```json
 {
@@ -43,46 +63,44 @@ Use `serve-di serve` command to serve site.
 #### Main CLI
 
 ```plain
-serve-di/0.0.10
+sserve-di/0.0.14
 
 Usage:
-  $ serve-di 
+  $ serve-di
 
 Commands:
-                      
-  serve [publicDir]   Serve site
-  init-config [file]  Init config file
-  init-package [div]  Init package.json file, which only contain `serve-di` package
+
+  init-config        Init config file
+  serve [serveDir]  Serve site
 
 For more info, run any command with the `--help` flag:
   $ serve-di --help
-  $ serve-di serve --help
   $ serve-di init-config --help
-  $ serve-di init-package --help
+  $ serve-di serve --help
 
 Options:
-  -v, --version  Display version number 
-  -h, --help     Display this message 
+  -v, --version  Display version number
+  -h, --help     Display this message
 ```
-
 
 #### `serve`
 
 ```plain
-serve-di/0.0.10
+serve-di/0.0.13
 
 Usage:
-  $ serve-di serve [publicDir]
+  $ serve-di serve [serveDir]
 
 Options:
-  --config <file>               Config file 
-  --port <port>                 Listening port 
-  --route-prefix <routePrefix>  Route prefix 
-  --verbose                     Print verbose logging 
-  -h, --help                    Display this message 
+  --config <file>               Config file
+  --port <port>                 Listening port
+  --route-prefix <routePrefix>  Route prefix
+  --verbose                     Print verbose logging
+  --noAuth                      Disable auth middlewares if exists in config file: basic auth and filter IP
+  -h, --help                    Display this message
 ```
 
-### Programing
+## Programing
 
 ```typescript
 import { Config, makeServer } from 'serve-di'
@@ -97,15 +115,22 @@ makeServer(config).listen(port, () => {
 })
 ```
 
-## Configuration (optional)
+## Configuration
 
-Create `serve-di.config.js` file at ROOT of your node app.
+You can use custom file to config module, support JSON and JS config. Detail of each type of config file please see below sections.
+
+Create `serve-di.config.json` or `serve-di.config.js` file at ROOT of your node app.
+
+**JS config file**
+
+[`serve-di.config.js`](./stubs/sample.js)
 
 ```js
 const { defineConfig } = require('serve-di')
 
 module.exports = defineConfig({
-  serveHandler: {
+  auth: [{ username: 'A', password: 'b' }],
+  serve: {
     public: 'dist',
     etag: true,
     cleanUrls: true,
@@ -119,16 +144,42 @@ module.exports = defineConfig({
 })
 ```
 
-### Configuration
+**JS config file**
+
+[`serve-di.config.json`](./stubs/sample.json)
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/madnh/serve-di/master/schema.json",
+  "auth": [{ "username": "A", "password": "B" }],
+  "serve": {
+    "public": "dist",
+    "etag": true,
+    "cleanUrls": true,
+    "directoryListing": false,
+    "trailingSlash": true
+  }
+}
+```
+
+`serve` field is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
+detail.
+
+#### JSON config version
+
+JSON config file only contains basic configs:
 
 ```typescript
-import type { Filter, Options } from 'http-proxy-middleware'
-type Config = {
+type JsonConfig = {
+  $schema?: string // Just link of JSON config schema file
   port?: number
-  middlewares?: Array<Middleware>
-  proxies?: Record<`/${string}`, string | Filter | Options>
-  serveHandler?: ServeHandlerConfig
-  custom?: (context: { app: Express; router: Router }) => void
+  validIps?: string[]
+  auth?: Array<{
+    username: string
+    password: string
+  }>
+  proxies?: Record<`/${string}`, string>
+  serve?: ServeConfig
   logs?: {
     config?: boolean
     url?: boolean
@@ -136,14 +187,11 @@ type Config = {
 }
 ```
 
-`ServeHandlerConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
-detail.
-
 #### Default configs
 
 ```typescript
 const config: Config = {
-  serveHandler: {
+  serve: {
     public: 'dist',
     etag: true,
     cleanUrls: true,
@@ -174,6 +222,15 @@ const config: Config = {
     },
     '/api2': 'http://localhost:3000/',
   },
+}
+```
+
+```json
+{
+  "proxies": {
+    "/api": "https://api.site.com",
+    "/api2": "http://localhost:3000/"
+  }
 }
 ```
 

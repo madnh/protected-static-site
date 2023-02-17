@@ -1,8 +1,7 @@
 {
-  "$schema": "./schema.json",
+  "$schema": "https://raw.githubusercontent.com/madnh/serve-di/master/schema.json",
   "auth": [
-    {"username": "A", "password": "B"},
-    {"username": "C", "password": "D"}
+    {"username": "A", "password": "B"}
   ],
   "serve": {
     "public": "dist",
