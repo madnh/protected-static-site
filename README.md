@@ -11,14 +11,30 @@ Serve static site with useful features.
   - Filter access by IP, netmask
   - Log requests
   - Proxy paths
-- Use custom config file
-- Generate commands
+- Use custom config file: in JS or JSON formats
+- Generate init command
 
 ## Install
+
+### Global
+
+```sh
+npm i -g serve-di
+```
+
+### In project
+
 
 ```sh
 npm i serve-di
 ```
+
+### NPX style
+
+```sh
+npx serve-di
+```
+
 
 ## Usage
 
@@ -31,6 +47,14 @@ npm i serve-di
 
 Use `serve-di serve` command to serve site.
 
+
+```sh
+serve-di serve
+npx serve-di serve
+```
+
+As NPM script
+
 ```json
 {
   "scripts": {
@@ -42,24 +66,24 @@ Use `serve-di serve` command to serve site.
 #### Main CLI
 
 ```plain
-serve-di/0.0.10
+sserve-di/0.0.14
 
 Usage:
   $ serve-di 
 
 Commands:
-                      
-  serve [publicDir]   Serve site
-  init-config [file]  Init config file
+                     
+  init-config        Init config file
+  serve [serveDir]  Serve site
 
 For more info, run any command with the `--help` flag:
   $ serve-di --help
-  $ serve-di serve --help
   $ serve-di init-config --help
+  $ serve-di serve --help
 
 Options:
   -v, --version  Display version number 
-  -h, --help     Display this message 
+  -h, --help     Display this message
 ```
 
 
@@ -102,7 +126,7 @@ Create `serve-di.config.js` file at ROOT of your node app.
 const { defineConfig } = require('serve-di')
 
 module.exports = defineConfig({
-  serveHandler: {
+  serve: {
     public: 'dist',
     etag: true,
     cleanUrls: true,
@@ -124,7 +148,7 @@ type Config = {
   port?: number
   middlewares?: Array<Middleware>
   proxies?: Record<`/${string}`, string | Filter | Options>
-  serveHandler?: ServeHandlerConfig
+  serve?: serveConfig
   custom?: (context: { app: Express; router: Router }) => void
   logs?: {
     config?: boolean
@@ -133,14 +157,14 @@ type Config = {
 }
 ```
 
-`ServeHandlerConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
+`serveConfig` is config of [serve-handler](https://github.com/vercel/serve-handler), refer to its config for
 detail.
 
 #### Default configs
 
 ```typescript
 const config: Config = {
-  serveHandler: {
+  serve: {
     public: 'dist',
     etag: true,
     cleanUrls: true,

@@ -2,7 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
+    "rootDir": "src",
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
@@ -11,9 +12,7 @@
     "skipLibCheck": true,
     "declaration": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
   },
-  "compileOnSave": true,
-  "include": [
-    "src"
-  ]
+  "compileOnSave": true
 }
