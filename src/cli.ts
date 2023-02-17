@@ -53,11 +53,6 @@ cli
 
 cli.command('init-config [file]', 'Init config file', { allowUnknownOptions: false }).action((file) => initConfigCommand({ configFile: file }))
 
-cli
-  .command('init-package [div]', 'Init package.json file, which only contain `serve-di` package')
-  .option('name <name>', 'Name of package', { default: 'app' })
-  .action((dir, options) => initPackageCommand(dir, options))
-
 cli.parse()
 
 function linkRoutePrefix(targetPath: string, prefix: string): [string, () => void] {
@@ -188,27 +183,5 @@ function initConfigCommand(options?: { configFile?: string }) {
   fs.writeFileSync(configFilePath, configTemplateJson)
 
   
-  console.log('Done')
-}
-
-function initPackageCommand(dir = '.', { name } = { name: 'app' }) {
-  const outputFile = path.resolve(process.cwd(), dir, 'package.json')
-  const template = JSON.stringify(
-    {
-      name,
-      private: true,
-      scripts: {
-        start: 'serve-di serve',
-      },
-      dependencies: {
-        'serve-di': `^${pkg.version}`,
-      },
-    },
-    null,
-    2
-  )
-
-  console.log('Write file:', outputFile)
-  fs.writeFileSync(outputFile, template)
   console.log('Done')
 }

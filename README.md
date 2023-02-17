@@ -28,7 +28,6 @@ npm i serve-di
 | -------------- | --------------------------------------------------------------- |
 | `serve`        | Serve site                                                      |
 | `init-config`  | Init sample config                                              |
-| `init-package` | Init `package.json` file, which only contain `serve-di` package |
 
 Use `serve-di serve` command to serve site.
 
@@ -52,13 +51,11 @@ Commands:
                       
   serve [publicDir]   Serve site
   init-config [file]  Init config file
-  init-package [div]  Init package.json file, which only contain `serve-di` package
 
 For more info, run any command with the `--help` flag:
   $ serve-di --help
   $ serve-di serve --help
   $ serve-di init-config --help
-  $ serve-di init-package --help
 
 Options:
   -v, --version  Display version number 
