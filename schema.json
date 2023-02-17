@@ -16,13 +16,16 @@
           }
         },
         "validIps": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "serve": {
           "$ref": "#/definitions/Serve"
+        },
+        "logs": {
+          "$ref": "#/definitions/Logs"
         }
       },
       "title": "ServeConfig"
@@ -66,7 +69,6 @@
           }
         }
       },
-      "required": ["cleanUrls", "directoryListing", "etag", "headers", "public", "redirects", "rewrites", "trailingSlash"],
       "title": "Serve"
     },
     "AuthInfo": {
@@ -142,6 +144,17 @@
       },
       "required": ["destination", "source"],
       "title": "Rewrite"
+    },
+    "Logs": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "boolean"
+        },
+        "url": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }
