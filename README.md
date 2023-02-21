@@ -63,7 +63,7 @@ As NPM script
 #### Main CLI
 
 ```plain
-sserve-di/0.0.14
+sserve-di/0.0.15
 
 Usage:
   $ serve-di
