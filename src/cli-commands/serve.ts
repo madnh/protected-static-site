@@ -123,7 +123,7 @@ function loadConfig(customConfigFile?: string) {
   return { configFile: customConfigFile, config: useConfig }
 }
 
-function serveCommand(serveDir: string, options?: { noAuth?: boolean; configFile: string; port?: number | string; routePrefix?: string }) {
+function serveCommand(serveDir?: string, options?: { noAuth?: boolean; configFile: string; port?: number | string; routePrefix?: string }) {
   const loadedConfig = loadConfig(options?.configFile)
   const useConfig: Config = loadedConfig ? loadedConfig.config : {}
 
@@ -134,24 +134,27 @@ function serveCommand(serveDir: string, options?: { noAuth?: boolean; configFile
     console.log('Config file: %s', path.relative(cwd, loadedConfig.configFile || ''))
   }
 
+  let useServeDir = serveDir || useConfig?.serve?.public && path.resolve(cwd, useConfig.serve.public) || cwd
   const onShutdownCallbacks: Array<() => void> = []
 
   if (options?.routePrefix) {
-    const [linkedDir, disposeCb] = linkRoutePrefix(serveDir, options.routePrefix)
-    serveDir = linkedDir
+    const [linkedDir, disposeCb] = linkRoutePrefix(useServeDir, options.routePrefix)
+    useServeDir = linkedDir
     onShutdownCallbacks.push(disposeCb)
     // console.log('Use link dir', defaultServeDir)
   }
 
-  const serveserveDir = path.resolve(serveDir || useConfig?.serve?.public || cwd)
-
-  console.log('Serve dir:', serveserveDir === cwd ? 'current working dir' : path.relative(cwd, serveserveDir))
+  // URL use to display in console
+  const displayServeDir = serveDir || useConfig?.serve?.public && path.resolve(cwd, useConfig.serve.public) || cwd
+  console.log('Serve dir:', displayServeDir === cwd ? 'current working dir' : path.relative(cwd, displayServeDir))
+  
+  log('Final serve dir', useServeDir)
 
   const config: Config = {
     ...useConfig,
     serve: {
       ...(useConfig?.serve || {}),
-      ...{ public: serveserveDir },
+      ...{ public: useServeDir },
     },
   }
 
@@ -189,12 +192,15 @@ function linkRoutePrefix(targetPath: string, prefix: string): [string, () => voi
   const tmpDir = os.tmpdir()
   const targetTempDir = fs.mkdtempSync(`${tmpDir}${path.sep}serve-dir-prefix-`)
   const targetTmpDir = `${targetTempDir}/${prefix}`.replace(/[/\\]{2,}/, path.sep).replace(/[/\\]*$/, '')
+  
+  log('Link path "%s" to "%s"', targetPath, targetTmpDir)
+
   fs.symlinkSync(targetPath, targetTmpDir)
 
   const disposeCb = () => {
     // console.log('Remove temp linked path:', targetTempDir);
     try {
-      fs.rmdirSync(targetTempDir, { recursive: true })
+      fs.rmSync(targetTempDir, { recursive: true })
     } catch (e) {
       console.error('Error! Remove temp linked path failed: %s, %s', targetTempDir, e || 'unknown reason')
     }
