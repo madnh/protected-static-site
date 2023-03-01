@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z, ZodType } from 'zod'
 import serveHandler from 'serve-handler'
 import { Express } from 'express'
 import type { Filter, Options } from 'http-proxy-middleware'
@@ -20,6 +20,10 @@ export type Config = {
     username: string
     password: string
   }>
+  /**
+   * Routes to skip authentication
+   */
+  bypassAuthRoutes?: Array<string>
   proxies?: Record<`/${string}`, string | Filter | Options>
   serve?: ServeHandlerConfig
   logs?: {
@@ -29,6 +33,28 @@ export type Config = {
 
   middlewares?: Array<Middleware>
   custom?: (app: Express, config: Config) => void
+}
+
+// JsonConfig is light version of full Config
+// But instead of use omit/pick, we defined all of properties, to easy to maintain
+export type JsonConfig = {
+  $schema?: string
+  port?: number
+  validIps?: Array<string>
+  auth?: Array<{
+    username: string
+    password: string
+  }>
+  /**
+   * Routes to skip authentication
+   */
+  bypassAuthRoutes?: Array<string>
+  proxies?: Record<`/${string}`, string | Filter | Options>
+  serve?: ServeHandlerConfig
+  logs?: {
+    config?: boolean
+    url?: boolean
+  }
 }
 
 export const JsonConfigSchema = z
@@ -44,6 +70,8 @@ export const JsonConfigSchema = z
         })
       )
       .optional(),
+    bypassAuthRoutes: z.array(z.string()).optional(),
+
     proxies: z.object({}).catchall(z.string()).optional(),
     serve: z
       .object({
@@ -62,7 +90,7 @@ export const JsonConfigSchema = z
             z.object({
               source: z.string(),
               destination: z.string(),
-              type: z.number().optional(),
+              type: z.number(),
             })
           )
           .optional(),
@@ -94,6 +122,4 @@ export const JsonConfigSchema = z
       })
       .optional(),
   })
-  .strict()
-
-export type JsonConfig = z.infer<typeof JsonConfigSchema>
+  .strict() satisfies ZodType<JsonConfig>

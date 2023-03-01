@@ -21,6 +21,12 @@
             "type": "string"
           }
         },
+        "bypassAuthRoutes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "serve": {
           "$ref": "#/definitions/Serve"
         },

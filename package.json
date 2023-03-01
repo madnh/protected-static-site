@@ -1,7 +1,7 @@
 {
   "name": "serve-di",
   "description": "Serve the site",
-  "version": "0.0.15",
+  "version": "0.0.99",
   "scripts": {
     "dev": "rm -fr dist && tsc -w",
     "build": "rm -fr dist && tsc -b",
@@ -23,9 +23,10 @@
     "cac": "^6.7.14",
     "debug": "^4.3.4",
     "express": "^4.18.2",
+    "minimatch": "^7.3.0",
     "netmask": "^2.0.2",
     "request-ip": "^3.3.0",
-    "serve-handler": "^6.1.3",
+    "serve-handler": "^6.1.5",
     "zod": "^3.20.6"
   },
   "devDependencies": {

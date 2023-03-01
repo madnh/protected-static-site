@@ -1,5 +1,6 @@
 import serveHandler from 'serve-handler'
-import express, { Express } from 'express'
+import express, { Express, Request } from 'express'
+import minimatch from 'minimatch'
 import { middleware, passThroughMW } from './services/express'
 import { log } from './utils'
 import type { Filter, Options } from 'http-proxy-middleware'
@@ -17,6 +18,24 @@ export function defineConfig(config: Config): Config {
   return config
 }
 
+function matchGlob(globs: Array<string>, check: string): string | undefined {
+  return globs.find((glob) => glob === check || minimatch(check, glob))
+}
+
+function createBypassAuthCb(publicRoutes: string[]) {
+  return (req: Request) => {
+    const { url } = req
+    const glob = matchGlob(publicRoutes, url)
+
+    if (glob) {
+      log(`Skip auth by glob: glob=${glob} url=${url}`)
+      return false
+    }
+
+    return true
+  }
+}
+
 export function makeServer(config: Config): Express {
   const app = express()
 
@@ -30,14 +49,16 @@ export function makeServer(config: Config): Express {
     config.custom(app, config)
   }
 
+  const enableAuthOption = config.bypassAuthRoutes ? createBypassAuthCb(config.bypassAuthRoutes) : true
+
   if (config.validIps) {
     log('Add filter ip middleware')
-    app.use(filterIpMiddleware({ allowIps: config.validIps }))
+    app.use(filterIpMiddleware({ allowIps: config.validIps, enable: enableAuthOption }))
   }
 
   if (config.auth) {
     log('Add basic auth middleware')
-    app.use(basicAuthMiddleware({ users: config.auth }))
+    app.use(basicAuthMiddleware({ users: config.auth, enable: enableAuthOption }))
   }
 
   // Add proxies middlewares
@@ -64,7 +85,6 @@ export function makeServer(config: Config): Express {
     log('Apply middlewares')
     config.middlewares.forEach((middleware) => app.use(middleware))
   }
-
 
   const serveConfig: ServeHandlerConfig = {
     public: 'dist',

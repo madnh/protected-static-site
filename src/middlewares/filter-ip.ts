@@ -1,8 +1,7 @@
-import { middleware, passThroughMW } from '../services/express'
+import { middleware, Request } from '../services/express'
 
 import { Netmask } from 'netmask'
 import * as requestIp from 'request-ip'
-
 
 function findValidIp(whiteListIp: Array<string>, clientIP: string): string | undefined {
   return whiteListIp.find((ip) => {
@@ -20,19 +19,37 @@ function findValidIp(whiteListIp: Array<string>, clientIP: string): string | und
   })
 }
 export type Options = {
-  enable?: boolean
+  enable?: boolean | ((req: Request) => boolean)
   allowIps: Array<string>
 }
 
 export default function filterIpMiddleware(options: Options) {
-  if (options.enable === false) {
+  const useOptions: Options = {
+    enable: true,
+
+    ...options,
+  }
+
+  if (useOptions.enable === false) {
     console.warn('Filter IP Middleware is disabled')
-    return passThroughMW()
-  } else {
+  } else if (useOptions.enable === true) {
     console.info('Filter IP Middleware is enabled')
+  } else {
+    console.warn('Filter IP Middleware enabled, but will check by route')
   }
 
   return middleware((req, res, next) => {
+    if (useOptions.enable === false) {
+      return next()
+    }
+    if (typeof useOptions.enable === 'function') {
+      if (useOptions.enable(req) === false) {
+        console.warn(`[Filter IP Middleware] skip for route: '${req.url}`)
+        return next()
+      }
+    }
+
+    // Apply check auth
     const clientIp = requestIp.getClientIp(req)
     const userAgent = req.header('user-agent')
 
@@ -44,7 +61,7 @@ export default function filterIpMiddleware(options: Options) {
       return
     }
 
-    const matchIP = findValidIp(options.allowIps, clientIp)
+    const matchIP = findValidIp(useOptions.allowIps, clientIp)
 
     if (!matchIP) {
       console.warn(`Invalid Access: ${clientIp}`)

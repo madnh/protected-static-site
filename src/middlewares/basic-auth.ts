@@ -1,66 +1,66 @@
 import { log } from '../utils'
 import { IncomingMessage } from 'http'
 import basicAuthLib from 'basic-auth'
-import { middleware, passThroughMW, Request } from '../services/express'
+import { middleware, Request } from '../services/express'
 
-export type UserAuthInfo = { username: string, password: string };
+export type UserAuthInfo = { username: string; password: string }
 
 export function findAuthUser(req: IncomingMessage, users: Array<UserAuthInfo>): { username: string } | false {
   const requestCredentials = basicAuthLib(req)
   if (!requestCredentials) return false
 
-  const user = users.find(user => requestCredentials.name === user.username && requestCredentials.pass === user.password)
+  const user = users.find((user) => requestCredentials.name === user.username && requestCredentials.pass === user.password)
   return user ? { username: user.username } : false
 }
 
 export type Options = {
-  enable?: boolean
+  enable?: boolean | ((req: Request) => boolean)
   users: Array<UserAuthInfo>
-  realm?: string,
+  realm?: string
   logs?: {
     user?: boolean
-  },
-  match?: RegExp | ((url: string, req: Request) => boolean)
+  }
 }
 
 export default function basicAuthMiddleware(options: Options) {
-  if (options.enable === false) {
+  const useOptions: Options = {
+    enable: true,
+    realm: 'Auth required',
+
+    ...options,
+  }
+
+  if (useOptions.enable === false) {
     console.warn('Basic authentication is disabled')
-    return passThroughMW()
-  } else {
+  } else if (useOptions.enable === true) {
     console.info('Basic authentication is enabled')
+  } else if (typeof useOptions.enable === 'function') {
+    console.warn('Basic authentication enabled, but will check by route')
   }
 
   return middleware((req, res, next) => {
-    let isNeedAuth = true
-
-    if (options.match) {
-      const url = req.url
-
-      if (options.match instanceof RegExp) {
-        isNeedAuth = options.match.test(url)
-      } else {
-        isNeedAuth = options.match(url, req)
+    if (useOptions.enable === false) {
+      return next()
+    }
+    if (typeof useOptions.enable === 'function') {
+      if (useOptions.enable(req) === false) {
+        console.warn(`[Basic authentication] skip for route: '${req.url}`)
+        return next()
       }
     }
 
-    if (!isNeedAuth) {
-      next()
-      return
-    }
-
     // Apply check auth
-    const user = findAuthUser(req, options.users)
+    const user = findAuthUser(req, useOptions.users)
     if (!user) {
       console.warn('Invalid access')
 
       res.status(401)
-      res.setHeader('WWW-Authenticate', `Basic realm="${options.realm || 'Auth required'}"`)
+      res.setHeader('WWW-Authenticate', `Basic realm="${useOptions.realm}"`)
       res.send('Access denied')
       return
     }
 
-    if (options.logs?.user) {
+    if (useOptions.logs?.user) {
       log(`User: ${user.username}`)
     }
 
