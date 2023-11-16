@@ -3,7 +3,6 @@ import { middleware, passThroughMW } from '../services/express'
 import { Netmask } from 'netmask'
 import * as requestIp from 'request-ip'
 
-
 function findValidIp(whiteListIp: Array<string>, clientIP: string): string | undefined {
   return whiteListIp.find((ip) => {
     if (!ip.includes('/')) return ip === clientIP
@@ -11,7 +10,12 @@ function findValidIp(whiteListIp: Array<string>, clientIP: string): string | und
     // Check subnet
     try {
       const block = new Netmask(ip)
-      return block.contains(clientIP)
+
+      try {
+        return block.contains(clientIP)
+      } catch (e) {
+        return false
+      }
     } catch (e) {
       console.warn(`IP source is invalid: ${ip}, ${e}`)
     }
