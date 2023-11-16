@@ -173,7 +173,16 @@ JSON config file only contains basic configs:
 type JsonConfig = {
   $schema?: string // Just link of JSON config schema file
   port?: number
+  /**
+   * List of validated IP, support IPv4 only, can be range of IPv4.
+   * @example
+   *   ['1.2.3.4', '2.3.4.5/27']
+   */
   validIps?: string[]
+
+  /**
+   * Basic Auth info
+   */
   auth?: Array<{
     username: string
     password: string
