@@ -11,6 +11,9 @@
   "bin": {
     "serve-di": "dist/cli.js"
   },
+  "engines": {
+    "node": 14
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
